@@ -169,6 +169,7 @@ module.exports = function (browserify, options) {
     loader.fetch(relFilename, '/').then(function (tokens) {
       var deps = loader.deps.dependenciesOf(filename);
       var output = deps.map(function (f) {
+        f = f.replace(/\\/g, "\\\\");
         return 'require("' + f + '")';
       });
       output.push('module.exports = ' + JSON.stringify(tokens));

@@ -42,6 +42,14 @@ var traceKeySorter = function traceKeySorter(a, b) {
   }
 };
 
+var badWindowsPattern = /\\[C-Z]:\\/;
+var fixWindowsPath = function(s) {
+  while (badWindowsPattern.test(s)) {
+    s = s.replace(badWindowsPattern, "\\");
+  }
+  return s;
+};
+
 var FileSystemLoader = (function () {
   function FileSystemLoader(root, plugins) {
     _classCallCheck(this, FileSystemLoader);
@@ -65,10 +73,10 @@ var FileSystemLoader = (function () {
         var relativeDir = _path2['default'].dirname(relativeTo),
             rootRelativePath = _path2['default'].resolve(relativeDir, newPath),
             rootRelativeDir = _path2['default'].join(_this.root, relativeDir),
-            fileRelativePath = _path2['default'].resolve(rootRelativeDir, newPath);
+            fileRelativePath = fixWindowsPath(_path2['default'].resolve(rootRelativeDir, newPath));
 
         // if the path is not relative or absolute, try to resolve it in node_modules
-        if (newPath[0] !== '.' && newPath[0] !== '/') {
+        if (newPath[0] !== '.' && newPath[0] !== '/' && (newPath[1] !== ':' || newPath[2] !== '\\')) {
           var paths;
           if (process.env.NODE_PATH) {
             paths = process.env.NODE_PATH.split(_path2['default'].delimiter);
@@ -91,7 +99,7 @@ var FileSystemLoader = (function () {
         }
         // otherwise add a dependency
         else {
-          var parentFilePath = _path2['default'].join(_this.root, relativeTo);
+          var parentFilePath = fixWindowsPath(_path2['default'].join(_this.root, relativeTo));
           if (!_this.deps.hasNode(parentFilePath)) {
             console.error('NO NODE', parentFilePath, fileRelativePath)
           }
