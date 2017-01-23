@@ -115,7 +115,10 @@ var FileSystemLoader = (function () {
         }
 
         _fs2['default'].readFile(fileRelativePath, 'utf-8', function (err, source) {
-          if (err) reject(err);
+          if (err) {
+            _this.deps.removeNode(fileRelativePath);
+            return reject(err);
+          }
           _this.core.load(source, rootRelativePath, trace, _this.fetch.bind(_this)).then(function (_ref) {
             var injectableSource = _ref.injectableSource;
             var exportTokens = _ref.exportTokens;
