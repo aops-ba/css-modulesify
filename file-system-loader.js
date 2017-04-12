@@ -131,6 +131,30 @@ var FileSystemLoader = (function () {
       });
     }
   }, {
+    key: 'serialize',
+    value: function serialize() {
+      return {
+        root: this.root,
+        sources: this.sources,
+        tokensByFile: this.tokensByFile,
+        deps: {
+          nodes: this.deps.nodes,
+          outgoingEdges: this.deps.outgoingEdges,
+          incomingEdges: this.deps.incomingEdges,
+        },
+      };
+    }
+  }, {
+    key: 'unserialize',
+    value: function unserialize(data) {
+      this.root = data.root;
+      this.sources = data.sources;
+      this.tokensByFile = data.tokensByFile;
+      this.deps.nodes = data.deps.nodes;
+      this.deps.outgoingEdges = data.deps.outgoingEdges;
+      this.deps.incomingEdges = data.deps.incomingEdges;
+    }
+  }, {
     key: 'finalSource',
     get: function () {
       var sources = this.sources;

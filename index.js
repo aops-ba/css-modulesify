@@ -93,6 +93,17 @@ module.exports = function (browserify, options) {
   if (rootDir) { rootDir = path.resolve(rootDir); }
   if (!rootDir) { rootDir = process.cwd(); }
 
+  var cachePath = options.cachePath || null;
+  var cacheData = null;
+  if (cachePath) {
+    try {
+      cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    }
+    catch (ex) {
+      cacheData = null;
+    }
+  }
+
   var transformOpts = {};
   if (options.global) {
     transformOpts.global = true;
@@ -148,6 +159,9 @@ module.exports = function (browserify, options) {
   // create a loader for this entry file
   if (!loadersByFile[cssOutFilename]) {
     loadersByFile[cssOutFilename] = new FileSystemLoader(rootDir, plugins);
+    if (cacheData) {
+      loadersByFile[cssOutFilename].unserialize(cacheData);
+    }
   }
 
   // TODO: clean this up so there's less scope crossing
@@ -169,7 +183,7 @@ module.exports = function (browserify, options) {
     loader.fetch(relFilename, '/').then(function (tokens) {
       var deps = loader.deps.dependenciesOf(filename);
       var output = deps.map(function (f) {
-        f = f.replace(/\\/g, "\\\\");
+        f = f.replace(/\\/g, '\\\\');
         return 'require("' + f + '")';
       });
       output.push('module.exports = ' + JSON.stringify(tokens));
@@ -233,6 +247,12 @@ module.exports = function (browserify, options) {
       if (jsonOutFilename) {
         writes.push(writeFile(jsonOutFilename, JSON.stringify(normalizeManifestPaths(tokensByFile, rootDir))));
       }
+
+      // if caching, write the cache
+      if (cachePath) {
+        writes.push(writeFile(cachePath, JSON.stringify(loader.serialize())));
+      }
+
       Promise.all(writes)
         .then(function () { cb(); })
         .catch(function (err) { self.emit('error', err); cb(); });
