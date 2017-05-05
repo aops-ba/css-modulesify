@@ -88,6 +88,8 @@ var loadersByFile = {};
 module.exports = function (browserify, options) {
   options = options || {};
 
+  var fullPaths = !!browserify._options.fullPaths;
+
   // if no root directory is specified, assume the cwd
   var rootDir = options.rootDir || options.d || browserify._options.basedir;
   if (rootDir) { rootDir = path.resolve(rootDir); }
@@ -164,6 +166,12 @@ module.exports = function (browserify, options) {
     }
   }
 
+  var makeRequireArg = function (fromPath, toPath) {
+    var base = path.relative(path.dirname(fromPath), toPath);
+    if (!/^\.\/|\.\.\//.test(base)) { base = "./" + base; }
+    return base;
+  };
+
   // TODO: clean this up so there's less scope crossing
   Cmify.prototype._flush = function (callback) {
     var self = this;
@@ -183,6 +191,7 @@ module.exports = function (browserify, options) {
     loader.fetch(relFilename, '/').then(function (tokens) {
       var deps = loader.deps.dependenciesOf(filename);
       var output = deps.map(function (f) {
+        f = fullPaths ? f : makeRequireArg(filename, f);
         f = f.replace(/\\/g, '\\\\');
         return 'require("' + f + '")';
       });
